@@ -1,4 +1,4 @@
-package pageObjects;
+package stepDefinations;
 
 import java.io.File;
 import java.io.IOException;
@@ -76,6 +76,7 @@ public class Hooks {
                 System.out.println("WebDriver is null. Cannot capture screenshot.");
                 return;
             }
+        	 fileName = fileName.replaceAll("[\\\\/:*?\"<>|]", "_");
             String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
             File screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
             File destinationFile = new File("target/screenshots/" +fileName + "_" + timestamp + ".png");

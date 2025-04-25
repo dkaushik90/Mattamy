@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory;
 
 import io.cucumber.java.en.*;
 import pageObjects.FyhPage;
-import pageObjects.Hooks;
 import utilities.WaitUtils;
 
 public class FyhPageSteps {
@@ -67,7 +66,7 @@ public class FyhPageSteps {
 	public void user_clicks_on_tab_and_filter_dropdown(String tabName, String filterType) {
 	    fyh.selectTab(tabName);
 	    WaitUtils.addDelay();
-	    fyh.clickSortType(tabName, filterType);
+	    fyh.clickSortType();
 	}
 
 	
@@ -76,9 +75,9 @@ public class FyhPageSteps {
 	    fyh.verifyFilterListVisible(tabName, filterType);
 	}
 	
-	@And("choosing any value from the {string} dropdown on the selected {string} tab")
-	public void choosing_any_value_from_the_dropdown_on_the_selected_tab(String filterType, String tabName) {
-	    fyh.selectRandomFilterValue(tabName, filterType);
+	@And("for the selected {string} tab choose any value from the {string} sort dropdown")
+	public void for_the_selected_tab_choose_any_value_from_the_sort_dropdown(String tabName, String sortType) {
+	    fyh.selectSortOptionByVisibleText( sortType);
 	}
 	
 	@Then("Listing should be updated as per the selected {string} for the {string} tab")

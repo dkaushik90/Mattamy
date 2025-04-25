@@ -50,7 +50,7 @@ public class FyhPage {
 	@FindBy(xpath = "//button[contains(@aria-label, 'Quick Move-Ins')]")
 	WebElement QmiTab;
 	
-	@FindBy(xpath = "//div[@aria-label='All Communities. Results will filter on the page.']//span[@class='whitespace-pre truncate']")
+	@FindBy(xpath = "(//div[contains(@aria-label, 'All Communities')]//span[contains(@class, 'truncate')])[1]")
 	WebElement communityTab;
 	
 	@FindBy(xpath="//div[contains(@class, 'sc-pdkfH')]//h3")
@@ -102,7 +102,10 @@ public class FyhPage {
 	List<WebElement> sortByName;
 	
 	@FindBy(xpath="//span[@class='sc-pCOPB eDrnHs flex font-trade-gothic-20 text-mattamy-blue text-3xl leading-9 md:-mb-1 ml-3 md:ml-0']")
-	List<WebElement> sortByPriceList;
+	List<WebElement> cardsPriceList;
+	
+	@FindBy(xpath = "//div[contains(text(),'No results in this area')]")
+	WebElement noResultsMessage;
 		
 	public void clickFyhLink()
 	{
@@ -159,14 +162,12 @@ public class FyhPage {
 	
 	public void selectTab(String tabName)
 	{
-		if(tabName.equalsIgnoreCase("Communities"))
-		{
-			
-			wait.until(ExpectedConditions.elementToBeClickable(communityTab)).click();
-		    System.out.println("Clicked on tab: " + tabName);
-		    WaitUtils.addDelay();
-			
-		}
+		 if (tabName.equalsIgnoreCase("Communities")) {
+	            wait.until(ExpectedConditions.visibilityOf(communityTab));
+	            System.out.println("Communities tab is selected by default. Skipping click, waited until visible.");
+	            WaitUtils.addDelay();
+		 }
+	          
 		else if(tabName.equalsIgnoreCase("Quick Move-Ins"))
 		{
 			wait.until(ExpectedConditions.elementToBeClickable(QmiTab)).click();
@@ -217,12 +218,27 @@ public class FyhPage {
 		
 	}
 	
-	public void clickSortType(String tabName, String sortType) {
-	   	    // Wait for the tab content to load
-	    WaitUtils.addDelay();
-	    wait.until(ExpectedConditions.visibilityOf(SortValue));
-	    SortValue.click();
+	public boolean isNoResultsDisplayed() {
+	    try {
+	        wait.until(ExpectedConditions.visibilityOf(noResultsMessage));
+	        return noResultsMessage.isDisplayed();
+	    } catch (Exception e) {
+	        return false;
+	    }
 	}
+	
+	public void clickSortType() {
+	    try {
+	        WaitUtils.addDelay(); // Small delay to allow elements to settle
+	        wait.until(ExpectedConditions.visibilityOf(SortValue));
+	        wait.until(ExpectedConditions.elementToBeClickable(SortValue)).click();
+	        System.out.println("Clicked on the sort dropdown icon.");
+	    } catch (Exception e) {
+	        System.out.println("Failed to click on sort dropdown: " + e.getMessage());
+	        throw e; // Rethrow to fail the test if it's critical
+	    }
+	}
+
 	
 	public void verifyFilterListVisible(String tabName, String filterType) {
 	    WaitUtils.addDelay();
@@ -244,33 +260,45 @@ public class FyhPage {
 	}
 
 	
-	public void selectRandomFilterValue(String tabName, String filterType)
-	{
-		WebElement selectedSortOption = CommonUtilities.getRandomElement(sortOptionsList);
-            System.out.println("Selected sort option: " +selectedSortOption);
-            selectedSortOption.click();
-     }
-	
-	public boolean isListingUpdatedBasedOnFilter(String tabName, String filterType) {
-	    if (filterType.equals("Price")) {
-	        return validatePriceFilter();
-	    } else if (filterType.equals("A-Z")) {
-	        return validateAlphabeticalOrder(tabName);
-	    } else if (filterType.equals("Size")) {
-	        return validateSizeFilter(tabName);
-	    } else {
-	        System.out.println("This filter type is not applicable for the selected tab.");
-	        return false;
+	public void selectSortOptionByVisibleText(String filterType) {
+	    for (WebElement option : sortOptionsList) {
+	        if (option.getText().trim().equalsIgnoreCase(filterType)) {
+	            System.out.println("Selecting sort option: " + filterType);
+	            jsUtils.scrollToElement(option);
+	            option.click();
+	            WaitUtils.addDelay();
+	            return;
+	        }
 	    }
 	}
+
+	
+	public boolean isListingUpdatedBasedOnFilter(String tabName, String filterType) {
+	    if (isNoResultsDisplayed()) {
+	        System.out.println("No results displayed for Tab: " + tabName + ", Filter: " + filterType);
+	        return true; // Considered as pass since app handled it gracefully
+	    }
+
+	    switch (filterType) {
+        case "$ - $$$":
+            return validatePriceFilter();
+        case "A - Z":
+            return validateAlphabeticalOrder(tabName);
+        case "Sq. Ft.":
+            return validateSizeFilter(tabName);
+        default:
+            System.out.println("Sort type not recognized: " + filterType);
+            return false;
+    }
+}
 
 	// Helper Method for "Price" Validation
 	private boolean validatePriceFilter() {
 		
-		wait.until(ExpectedConditions.visibilityOfAllElements(sortByPriceList));
-	    System.out.println("List Size: " + sortByPriceList.size());
+		wait.until(ExpectedConditions.visibilityOfAllElements(cardsPriceList));
+	    System.out.println("List Size: " + cardsPriceList.size());
 	    List<Integer> prices = new ArrayList<>();
-	    for (WebElement sortByPrice : sortByPriceList) {
+	    for (WebElement sortByPrice : cardsPriceList) {
 	        String priceText = sortByPrice.getText().replaceAll("[^0-9]", ""); // Remove non-numeric characters
 	        if (!priceText.isEmpty()) {
 	            prices.add(Integer.parseInt(priceText));

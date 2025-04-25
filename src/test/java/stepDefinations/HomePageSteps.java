@@ -6,7 +6,6 @@ import org.openqa.selenium.WebElement;
 
 import io.cucumber.java.en.*;
 import pageObjects.HomePage;
-import pageObjects.Hooks;
 
 
 public class HomePageSteps {
